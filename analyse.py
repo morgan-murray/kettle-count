@@ -43,19 +43,3 @@ plt.plot(secs,score)
 plt.savefig(graphicfilename)
 
 quit()
-
-local = []
-remote = []
-
-with open("log.txt","r") as f:
-    for line in f:
-        ln = line.split()
-
-        local.append(ln[0])
-        remote.append(ln[1])
-
-
-diff = [ float(local[i]) - float(remote[i]) for i in range(len(local)) ]
-
-h1 = plt.hist(diff,bins=20)
-plt.show()

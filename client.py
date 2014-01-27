@@ -6,7 +6,7 @@ import pika
 import math,time
 import threading, Queue, sys, socket
 
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -19,7 +19,7 @@ class CommandConsumer():
 
          # Now open the comm channel
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters('192.168.0.10'))
+            pika.ConnectionParameters('localhost'))
 
         self.channel = self.connection.channel()
 
@@ -68,7 +68,7 @@ class ScoreHandler():
 
          # Now open the comm channel
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters('192.168.0.10'))
+            pika.ConnectionParameters('localhost'))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='kbscores')
 
@@ -104,6 +104,8 @@ class Counter(Frame):
     def __init__(self,root):
         
         Frame.__init__(self,root)
+
+        self.root = root
 
         self.customFont = tkFont.Font(family="Courier", size=200,weight="bold")
 
@@ -160,6 +162,9 @@ class Counter(Frame):
         self.last_increment = 0
         self.last_decrement = 0
 
+        self.start_job = None
+        self.pause_job = None
+
         self.command_queue = Queue.Queue()
         self.score_queue = Queue.Queue()
 
@@ -202,15 +207,15 @@ class Counter(Frame):
         #if self.Stop == True or self.Reset == True:
         #    return
 
-        #if cb != None:
-        #    print "Hardware Decrement Button pushed!"
+        if cb != None:
+            print "Hardware Decrement Button pushed!"
 
-        #now = time.time()
+        now = time.time()
 
-        #if now - self.last_decrement < self.debounce:
-        #    return
+        if ( now - self.last_decrement ) < self.debounce:
+            return
 
-        #self.last_decrement = now
+        self.last_decrement = now
 
         self.counter -= 1
         self.scoreFrame.delete(1.0,END)
@@ -233,7 +238,7 @@ class Counter(Frame):
                     self.start(msg)
                 elif "STOP" in msg:
                     print "Stop message"
-                    self.stop()
+                    self.stop(msg)
                 elif "RESET" in msg:
                     print "Reset message"
                     self.reset()
@@ -298,15 +303,39 @@ class Counter(Frame):
             self.updateTime()
 
 
-    def stop(self,message=""):
-        # Ignore the message for now
+    def stop(self,stop_time = -1):
+
+        print "stopping timer"
+        print "stopping at " + str(stop_time)
+        print "time now " + str(time.time())
+        
+        # Parse the start message
+        if ":" in stop_time :
+            stop_time = float(stop_time.split(":")[1])
+
+        if stop_time != "STOP":
+            # STOPPING HAS A BUG - NEEDS TO FIGURE OUT THE MESSAGE CORRECTLY!
+            # CURRENTLY HAS NOW WAY OF CORRECTLY IDENTIFYING WHEN TO STOP (SEES 'STOP' WHEN SHOULD SEE NOTHING)
+            now = time.time()
+            self.pause_job = self.after( (int(stop_time) - int(now)) , self.pause)
+        else:
+            self.pause()
+
+    def pause(self):
+
         self.Stop = True
         self.Reset = False
         self.interstitial = self.seconds
 
         
     def reset(self):
+
+        if self.start_job is not None:
+            self.after_cancel(self.start_job)
        
+        if self.pause_job is not None:
+            self.after_cancel(self.pause_job)
+
         self.Stop = False
         self.Reset = True
 

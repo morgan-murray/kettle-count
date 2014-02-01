@@ -69,7 +69,7 @@ class ScoreHandler():
 
          # Now open the comm channel
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters('localhost'))
+            pika.ConnectionParameters('192.168.0.10'))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='kbscores')
 

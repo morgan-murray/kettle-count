@@ -6,7 +6,7 @@ import pika
 import math,time
 import threading, Queue, sys, socket
 
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -19,7 +19,8 @@ class CommandConsumer():
 
          # Now open the comm channel
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters('localhost'))
+#            pika.ConnectionParameters('localhost'))
+            pika.ConnectionParameters('192.168.0.10'))
 
         self.channel = self.connection.channel()
 
@@ -140,13 +141,13 @@ class Counter(Frame):
         # Hardware Buttons
         # The hardware buttons
         self.debounce = 0.2
-        #GPIO.setmode(GPIO.BCM)
-        #GPIO.setup(24,GPIO.IN)
-        #GPIO.setup(27,GPIO.IN)
-        #GPIO.add_event_detect(24,GPIO.BOTH,
-        #                      callback=self.incrementCounter)
-        #GPIO.add_event_detect(27,GPIO.BOTH,
-        #                      callback=self.decrementCounter)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(24,GPIO.IN)
+        GPIO.setup(27,GPIO.IN)
+        GPIO.add_event_detect(24,GPIO.BOTH,
+                              callback=self.incrementCounter)
+        GPIO.add_event_detect(27,GPIO.BOTH,
+                              callback=self.decrementCounter)
 
 
         self.counter = 0
